@@ -1,0 +1,48 @@
+DEX PROJECT STARTUP GUIDE
+========================
+
+STEP 1: Start Anvil Blockchain
+------------------------------
+1. Open terminal in contracts folder
+2. Run: anvil
+3. Keep this terminal open (blockchain running on localhost:8545)
+
+STEP 2: Deploy Smart Contracts
+------------------------------
+1. Open NEW terminal in contracts folder
+2. Run: forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
+3. Copy the deployed contract addresses from output
+
+STEP 3: Update Frontend Contract Addresses
+------------------------------------------
+1. Go to: frontend/src/config/wagmi.js
+2. Update the addresses in CONTRACT_ADDRESSES[31337]:
+   - factory: [Factory contract address]
+   - router: [Router contract address] 
+   - weth: [WETH contract address]
+   - dexToken: [DEXToken contract address]
+
+STEP 4: Start Frontend
+----------------------
+1. Open terminal in frontend folder
+2. Run: npm run dev
+3. Open browser to http://localhost:5173
+
+CURRENT WORKING ADDRESSES (Reference):
+=====================================
+factory: 0x5fbdb2315678afecb367f032d93f642f64180aa3
+router: 0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0
+weth: 0xe7f1725e7734ce288f8367e1bb143e90bb3f0512
+dexToken: 0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9
+governor: 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9
+timelock: 0x5FC8d32690cc91D4c39d9d3abcBD16989F875707
+treasury: 0x0165878A594ca255338adfa4d48449f69242Eb8F
+
+NOTE: Addresses will change each time you restart Anvil!
+Always update wagmi.js with new addresses after deployment.
+
+TROUBLESHOOTING:
+===============
+- If MetaMask shows wrong network, switch to "Localhost 8545"
+- If transactions fail, check contract addresses are updated
+- If no liquidity pools, ensure Factory/Router addresses are correct
