@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react'
-import { 
-  Box, 
-  VStack, 
-  HStack, 
+import {
+  Box,
+  VStack,
+  HStack,
   Text,
   Portal
 } from '@chakra-ui/react'
 import { chakra } from '@chakra-ui/react'
 import { FaSearch, FaTimes, FaChevronDown } from 'react-icons/fa'
-import { getAddress } from 'viem'
+import { useChainId } from 'wagmi'
 import EthereumLogo from '../assets/ethereum-eth-logo.svg'
-import BitcoinLogo from '../assets/bitcoin-btc-logo.svg'
-import USDTLogo from '../assets/tether-usdt-logo.svg'
 import USDCLogo from '../assets/usd-coin-usdc-logo.svg'
 import ProtoLogo from '../assets/proto-logo-vector.png'
+import { CONTRACT_ADDRESSES } from '../config/wagmi'
 
 // Create custom components
 const Input = chakra('input', {
@@ -48,41 +47,29 @@ const Button = chakra('button', {
   }
 })
 
-// Popular tokens with logos and info
-// Note: Using local Hardhat addresses - these should match your deployed contracts
-const POPULAR_TOKENS = [
-  {
-    symbol: 'ETH',
-    name: 'Ethereum',
-    address: 'ETH',
-    decimals: 18,
-    logo: EthereumLogo,
-    price: '$2,634.42'
-  },
-  {
-    symbol: 'WETH',
-    name: 'Wrapped Ethereum',
-    address: getAddress('0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'), // Your local WETH address
-    decimals: 18,
-    logo: EthereumLogo,
-    price: '$2,634.42'
-  },
-  {
-    symbol: 'PROTO',
-    name: 'Proto Token',
-    address: getAddress('0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9'), // Your DEX token address
-    decimals: 18,
-    logo: ProtoLogo,
-    price: '$0.50'
-  }
-]
+const ZERO = '0x0000000000000000000000000000000000000000'
 
-export function TokenSelector({ 
-  selectedToken, 
-  onTokenSelect, 
+function buildTokenList(addresses) {
+  const tokens = [
+    { symbol: 'ETH',   name: 'Ethereum',         address: 'ETH',              decimals: 18, logo: EthereumLogo },
+    { symbol: 'WETH',  name: 'Wrapped Ethereum',  address: addresses?.weth,    decimals: 18, logo: EthereumLogo },
+    { symbol: 'PROTO', name: 'Proto Token',        address: addresses?.dexToken,decimals: 18, logo: ProtoLogo    },
+    { symbol: 'USDC',  name: 'Mock USDC',          address: addresses?.mockUsdc,decimals: 6,  logo: USDCLogo     },
+  ]
+  // Only include tokens whose address is set and non-zero
+  return tokens.filter(t => t.address && t.address !== ZERO)
+}
+
+export function TokenSelector({
+  selectedToken,
+  onTokenSelect,
   excludeToken,
   placeholder = "Select token"
 }) {
+  const chainId = useChainId()
+  const addresses = CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[31337]
+  const POPULAR_TOKENS = buildTokenList(addresses)
+
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredTokens, setFilteredTokens] = useState(POPULAR_TOKENS)
@@ -91,12 +78,12 @@ export function TokenSelector({
   useEffect(() => {
     const filtered = POPULAR_TOKENS.filter(token => {
       const matchesSearch = token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           token.name.toLowerCase().includes(searchTerm.toLowerCase())
+                            token.name.toLowerCase().includes(searchTerm.toLowerCase())
       const notExcluded = !excludeToken || token.address !== excludeToken
       return matchesSearch && notExcluded
     })
     setFilteredTokens(filtered)
-  }, [searchTerm, excludeToken])
+  }, [searchTerm, excludeToken, chainId])
 
   const selectedTokenData = POPULAR_TOKENS.find(token => {
     // Handle both string tokens and token objects

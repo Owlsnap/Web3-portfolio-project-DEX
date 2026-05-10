@@ -12,8 +12,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * Includes minting capability for easy testing
  */
 
- contract MockERC20 is ERC20, Ownable {
+contract MockERC20 is ERC20, Ownable {
     uint8 private _decimals;
+
+    uint256 public constant FAUCET_AMOUNT = 1000;
+    uint256 public constant FAUCET_COOLDOWN = 24 hours;
+    mapping(address => uint256) public lastFaucetClaim;
 
     constructor(
         string memory name,
@@ -43,7 +47,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
         _mint(to, amount);
     }
 
-        /**
+    /**
      * @dev Burn tokens from caller's balance
      * @param amount Amount of tokens to burn
      */
@@ -51,4 +55,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
         _burn(msg.sender, amount);
     }
 
+    /**
+     * @dev Public faucet — mints FAUCET_AMOUNT tokens to caller, once per FAUCET_COOLDOWN.
+     */
+    function faucet() external {
+        require(
+            block.timestamp >= lastFaucetClaim[msg.sender] + FAUCET_COOLDOWN,
+            "MockERC20: faucet cooldown active"
+        );
+        lastFaucetClaim[msg.sender] = block.timestamp;
+        _mint(msg.sender, FAUCET_AMOUNT * 10 ** _decimals);
+    }
 }

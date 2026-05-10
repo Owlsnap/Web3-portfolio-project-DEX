@@ -24,6 +24,9 @@
     "viem": "^2.38.4",
     "wagmi": "^2.18.2"
   },
+  "overrides": {
+    "axios": ">=1.15.2"
+  },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/react": "^19.1.16",

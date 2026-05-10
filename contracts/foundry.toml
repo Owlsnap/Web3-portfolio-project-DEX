@@ -8,12 +8,12 @@ remappings = [
 ]
 
 [rpc_endpoints]
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
 sepolia = "https://sepolia.infura.io/v3/${INFURA_API_KEY}"
 mainnet = "https://mainnet.infura.io/v3/${INFURA_API_KEY}"
 
-# [etherscan]
-# sepolia = { key = "${ETHERSCAN_API_KEY}" }
-# mainnet = { key = "${ETHERSCAN_API_KEY}" }
+[etherscan]
+base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
 
 
 

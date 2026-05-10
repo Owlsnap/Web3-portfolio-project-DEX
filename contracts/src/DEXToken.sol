@@ -34,9 +34,9 @@ contract DEXToken is ERC20, ERC20Permit, ERC20Votes, Ownable {
      * @dev Constructor - Deploy the governance token
      * @param initialOwner Address that will own the contract initially
      */
-    constructor(address initialOwner) 
-        ERC20("DEX Token", "DEX") 
-        ERC20Permit("DEX Token")
+    constructor(address initialOwner)
+        ERC20("Proto Token", "PROTO")
+        ERC20Permit("Proto Token")
         Ownable(initialOwner)
     {
         // Mint total supply to the contract owner initially
@@ -44,6 +44,8 @@ contract DEXToken is ERC20, ERC20Permit, ERC20Votes, Ownable {
         _mint(initialOwner, TOTAL_SUPPLY);
         
         emit TokensDistributed(initialOwner, TOTAL_SUPPLY, "Initial mint to contract owner");
+        // Self-delegate so voting power is active from deployment
+        _delegate(initialOwner, initialOwner);
     }
     
     /**
