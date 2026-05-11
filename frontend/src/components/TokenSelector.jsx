@@ -49,6 +49,13 @@ const Button = chakra('button', {
 
 const ZERO = '0x0000000000000000000000000000000000000000'
 
+const TOKEN_CARD_STYLE = {
+  ETH:   { bg: 'linear-gradient(145deg, #c4b5fd 0%, #8b5cf6 100%)', iconBg: 'rgba(255,255,255,0.18)' },
+  WETH:  { bg: 'linear-gradient(145deg, #93c5fd 0%, #3b82f6 100%)', iconBg: 'rgba(255,255,255,0.18)' },
+  PROTO: { bg: 'linear-gradient(145deg, #f472b6 0%, #9333ea 100%)', iconBg: 'rgba(255,255,255,0.18)' },
+  USDC:  { bg: 'linear-gradient(145deg, #38bdf8 0%, #2563eb 100%)', iconBg: 'rgba(255,255,255,0.18)' },
+}
+
 function buildTokenList(addresses) {
   const tokens = [
     { symbol: 'ETH',   name: 'Ethereum',         address: 'ETH',              decimals: 18, logo: EthereumLogo },
@@ -115,7 +122,7 @@ export function TokenSelector({
         fontSize="16px"
         fontWeight="600"
         color="#FFD700"
-        minW="140px"
+        minW="175px"
         h="48px"
         px={3}
       >
@@ -158,125 +165,125 @@ export function TokenSelector({
             left="0"
             right="0"
             bottom="0"
-            bg="rgba(0, 0, 0, 0.7)"
+            bg="rgba(6, 5, 20, 0.88)"
+            backdropFilter="blur(12px)"
             zIndex={1000}
             display="flex"
+            flexDir="column"
             alignItems="center"
-            justifyContent="center"
+            pt="80px"
+            px={6}
             onClick={() => setIsOpen(false)}
           >
-            <Box
-              bg="#1F1F1F"
-              border="1px solid rgba(255, 215, 0, 0.2)"
-              borderRadius="24px"
-              w="420px"
-              maxH="600px"
-              onClick={(e) => e.stopPropagation()}
-              overflow="hidden"
-              boxShadow="0 20px 60px rgba(0, 0, 0, 0.5)"
+            {/* Close button — top right corner */}
+            <Button
+              position="fixed"
+              top={5}
+              right={5}
+              onClick={() => setIsOpen(false)}
+              bg="rgba(255,255,255,0.08)"
+              color="rgba(255, 255, 255, 0.7)"
+              _hover={{ bg: "rgba(255, 255, 255, 0.15)" }}
+              borderRadius="12px"
+              w="40px"
+              h="40px"
+              p={0}
             >
-              {/* Header */}
-              <HStack justify="space-between" p={5} borderBottom="1px solid rgba(255, 255, 255, 0.1)">
-                <Text fontSize="20px" fontWeight="700" color="white">
-                  Select a token
-                </Text>
-                <Button
-                  onClick={() => setIsOpen(false)}
-                  bg="transparent"
-                  color="rgba(255, 255, 255, 0.7)"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.1)" }}
-                  borderRadius="12px"
-                  w="36px"
-                  h="36px"
-                  p={0}
-                >
-                  <FaTimes />
-                </Button>
-              </HStack>
+              <FaTimes />
+            </Button>
 
+            <Box
+              w="full"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Search */}
-              <Box p={5}>
+              <Box pb={8} maxW="520px" mx="auto">
                 <Box position="relative">
-                  <FaSearch 
+                  <FaSearch
                     style={{
                       position: 'absolute',
-                      left: '16px',
+                      left: '18px',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: 'rgba(255, 255, 255, 0.5)',
+                      color: 'rgba(255, 255, 255, 0.45)',
                       fontSize: '16px'
                     }}
                   />
                   <Input
-                    placeholder="Search name or paste address"
+                    placeholder="Find a token"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    pl="48px"
-                    bg="rgba(255, 255, 255, 0.12)"
-                    border="1px solid rgba(255, 255, 255, 0.12)"
-                    _focus={{ 
-                      borderColor: "#FFD700",
-                      bg: "rgba(255, 255, 255, 0.08)"
+                    w="full"
+                    pl="52px"
+                    py="14px"
+                    fontSize="17px"
+                    borderRadius="16px"
+                    bg="rgba(255, 255, 255, 0.07)"
+                    border="1px solid rgba(139, 92, 246, 0.22)"
+                    _focus={{
+                      borderColor: "#8b5cf6",
+                      bg: "rgba(139, 92, 246, 0.08)"
                     }}
                   />
                 </Box>
               </Box>
 
-              {/* Popular Tokens */}
-              <Box px={5} pb={2}>
-                <Text fontSize="14px" fontWeight="600" color="rgba(255, 255, 255, 0.7)" mb={3}>
-                  Popular tokens
-                </Text>
+              {/* Token Grid */}
+              <Box
+                display="grid"
+                gridTemplateColumns="repeat(4, 175px)"
+                gap={5}
+                p={2}
+                mx="auto"
+                w="fit-content"
+              >
+                {filteredTokens.map((token) => {
+                  const style = TOKEN_CARD_STYLE[token.symbol] || {
+                    bg: 'linear-gradient(145deg, #374151 0%, #1f2937 100%)',
+                    iconBg: 'rgba(255,255,255,0.12)'
+                  }
+                  return (
+                    <Box
+                      key={token.address}
+                      cursor="pointer"
+                      borderRadius="22px"
+                      background={style.bg}
+                      w="175px"
+                      h="175px"
+                      display="flex"
+                      flexDir="column"
+                      alignItems="center"
+                      justifyContent="center"
+                      gap={3}
+                      onClick={() => handleTokenSelect(token)}
+                      transition="all 0.18s cubic-bezier(0.4,0,0.2,1)"
+                      _hover={{ transform: 'scale(1.05)', filter: 'brightness(1.1)' }}
+                      border="1.5px solid rgba(255,255,255,0.18)"
+                      boxShadow="0 8px 32px rgba(0,0,0,0.35)"
+                    >
+                      <Box
+                        w="96px"
+                        h="96px"
+                        borderRadius="50%"
+                        bg={style.iconBg}
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        p="8px"
+                      >
+                        <img
+                          src={token.logo}
+                          alt={token.symbol}
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                      </Box>
+                      <Text fontSize="13px" fontWeight="700" color="white" textAlign="center" lineHeight="1.3">
+                        {token.name}
+                      </Text>
+                    </Box>
+                  )
+                })}
               </Box>
-
-              {/* Token List */}
-              <VStack gap={0} maxH="400px" overflowY="auto" pb={4}>
-                {filteredTokens.map((token) => (
-                  <Box
-                    key={token.address}
-                    w="full"
-                    px={5}
-                    py={3}
-                    cursor="pointer"
-                    _hover={{ bg: "rgba(255, 215, 0, 0.1)" }}
-                    onClick={() => handleTokenSelect(token)}
-                    transition="all 0.2s"
-                  >
-                    <HStack justify="space-between" w="full">
-                      <HStack gap={3}>
-                        <Box w="36px" h="36px">
-                          <img 
-                            src={token.logo} 
-                            alt={token.symbol}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'contain',
-                              borderRadius: '50%'
-                            }}
-                          />
-                        </Box>
-                        <VStack align="start" gap={0}>
-                          <Text fontSize="16px" fontWeight="600" color="white">
-                            {token.symbol}
-                          </Text>
-                          <Text fontSize="14px" color="rgba(255, 255, 255, 0.6)">
-                            {token.name}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      <VStack align="end" gap={0}>
-                        <Text fontSize="16px" fontWeight="600" color="white">
-                          0.00
-                        </Text>
-                        <Text fontSize="14px" color="rgba(255, 255, 255, 0.6)">
-                          {token.price}
-                        </Text>
-                      </VStack>
-                    </HStack>
-                  </Box>
-                ))}
-              </VStack>
 
               {/* No results */}
               {filteredTokens.length === 0 && (

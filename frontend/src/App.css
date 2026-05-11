@@ -10,10 +10,11 @@
 }
 
 body {
-  background-image: url('./assets/cf-flow-35ADlk1gwTAZTA6Lgp0fNtTaVIq.png');
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background-color: #0c0b1a;
+  background-image:
+    radial-gradient(ellipse 90% 70% at 10% 40%, rgba(108, 44, 220, 0.38) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 60% at 88% 15%, rgba(55, 80, 230, 0.32) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 65% 88%, rgba(90, 30, 190, 0.22) 0%, transparent 55%);
   background-attachment: fixed;
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
