@@ -351,7 +351,7 @@ contract Router {
     // ============ SWAP FUNCTIONS ============
     
     /**
-     * @dev Calculate amount out for a given amount in (with 0.3% fee)
+     * @dev Calculate amount out for a given amount in using the governance-controlled fee
      * @param amountIn Amount of input token
      * @param reserveIn Reserve of input token in pair
      * @param reserveOut Reserve of output token in pair
@@ -359,21 +359,21 @@ contract Router {
      */
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut)
         public
-        pure
+        view
         returns (uint256 amountOut)
     {
         require(amountIn > 0, "Router: INSUFFICIENT_INPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "Router: INSUFFICIENT_LIQUIDITY");
-        
-        // Apply 0.3% fee: amountIn * 997 / 1000
-        uint256 amountInWithFee = amountIn * 997;
+
+        uint256 fee = Factory(factory).tradingFee(); // basis points, e.g. 30 = 0.3%
+        uint256 amountInWithFee = amountIn * (10000 - fee);
         uint256 numerator = amountInWithFee * reserveOut;
-        uint256 denominator = (reserveIn * 1000) + amountInWithFee;
+        uint256 denominator = (reserveIn * 10000) + amountInWithFee;
         amountOut = numerator / denominator;
     }
-    
+
     /**
-     * @dev Calculate amount in needed for a given amount out (with 0.3% fee)  
+     * @dev Calculate amount in needed for a given amount out using the governance-controlled fee
      * @param amountOut Desired amount of output token
      * @param reserveIn Reserve of input token in pair
      * @param reserveOut Reserve of output token in pair
@@ -381,14 +381,15 @@ contract Router {
      */
     function getAmountIn(uint256 amountOut, uint256 reserveIn, uint256 reserveOut)
         public
-        pure
+        view
         returns (uint256 amountIn)
     {
         require(amountOut > 0, "Router: INSUFFICIENT_OUTPUT_AMOUNT");
         require(reserveIn > 0 && reserveOut > 0, "Router: INSUFFICIENT_LIQUIDITY");
-        
-        uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * 997;
+
+        uint256 fee = Factory(factory).tradingFee(); // basis points, e.g. 30 = 0.3%
+        uint256 numerator = reserveIn * amountOut * 10000;
+        uint256 denominator = (reserveOut - amountOut) * (10000 - fee);
         amountIn = (numerator / denominator) + 1; // +1 for rounding
     }
     

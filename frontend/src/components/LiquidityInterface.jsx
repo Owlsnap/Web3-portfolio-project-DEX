@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { 
   Box, 
   VStack, 
@@ -240,7 +240,7 @@ const PAIR_ABI = [
 
 export function LiquidityInterface() {
   const { address, chainId } = useAccount()
-  const { writeContract, data: hash, isPending } = useWriteContract()
+  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
   
   // Tab state
@@ -286,9 +286,13 @@ export function LiquidityInterface() {
   const [lpAmount, setLpAmount] = useState('')
   const [showLpDropdown, setShowLpDropdown] = useState(false)
 
-  // Add state to track approval status
+  // Add state to track approval status (ETH-token flow)
   const [approvalNeeded, setApprovalNeeded] = useState(true)
   const [approvalInProgress, setApprovalInProgress] = useState(false)
+
+  // Token-token addLiquidity step machine: 0=idle, 1=approveA, 2=approveB, 3=addLiquidity
+  const [tokenTokenStep, setTokenTokenStep] = useState(0)
+  const tokenTokenParamsRef = useRef(null)
 
   // Check current allowance to determine if approval is needed
   const { data: currentAllowance, refetch: refetchAllowance, error: allowanceError, isLoading: allowanceLoading } = useReadContract({
@@ -371,6 +375,70 @@ export function LiquidityInterface() {
       }, 1000)
     }
   }, [isSuccess, approvalInProgress, refetchAllowance])
+
+  // Token-token addLiquidity step machine — advances on each confirmed tx
+  useEffect(() => {
+    if (!isSuccess || tokenTokenStep === 0) return
+    const params = tokenTokenParamsRef.current
+
+    if (tokenTokenStep === 1 && params) {
+      setTokenTokenStep(2)
+      toaster.create({
+        title: 'Step 2 of 3: Approve Token B',
+        description: 'Please approve Token B in your wallet.',
+        status: 'info',
+        duration: 5000,
+      })
+      writeContract({
+        address: params.tokenAddressB,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [contractAddresses.router, params.amountBDesired]
+      })
+    } else if (tokenTokenStep === 2 && params) {
+      setTokenTokenStep(3)
+      toaster.create({
+        title: 'Step 3 of 3: Add Liquidity',
+        description: 'Please confirm the add liquidity transaction.',
+        status: 'info',
+        duration: 5000,
+      })
+      writeContract({
+        address: contractAddresses.router,
+        abi: ROUTER_ABI,
+        functionName: 'addLiquidity',
+        args: [
+          params.tokenAddressA,
+          params.tokenAddressB,
+          params.amountADesired,
+          params.amountBDesired,
+          params.amountAMin,
+          params.amountBMin,
+          address,
+          params.deadline
+        ]
+      })
+    } else if (tokenTokenStep === 3) {
+      setTokenTokenStep(0)
+      tokenTokenParamsRef.current = null
+      refetchAllBalances()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuccess, tokenTokenStep])
+
+  // Reset token-token state machine if the user rejects a wallet prompt
+  useEffect(() => {
+    if (writeError && tokenTokenStep > 0) {
+      setTokenTokenStep(0)
+      tokenTokenParamsRef.current = null
+      toaster.create({
+        title: 'Transaction Failed',
+        description: writeError.message,
+        status: 'error',
+        duration: 5000,
+      })
+    }
+  }, [writeError, tokenTokenStep])
 
   // Show success toast when transaction hash is available (same timing as "Transaction submitted!" message)
   useEffect(() => {
@@ -578,6 +646,18 @@ export function LiquidityInterface() {
     return formatBalance(removeLpBalance, 18)
   }
 
+  const getAddButtonLabel = () => {
+    const isETHPair = tokenA === 'ETH' || tokenB === 'ETH'
+    if (!isETHPair) {
+      if (tokenTokenStep === 1) return 'Approving Token A...'
+      if (tokenTokenStep === 2) return 'Approving Token B...'
+      if (tokenTokenStep === 3) return 'Adding Liquidity...'
+      return 'Add Liquidity'
+    }
+    if (isPending || isConfirming) return approvalNeeded ? 'Approving...' : 'Adding Liquidity...'
+    return approvalNeeded ? 'Approve PROTO Tokens' : 'Add Liquidity'
+  }
+
   // LP Selector Component
   const LpSelector = ({ selectedLp, onLpSelect }) => {
     const selectedPair = LP_PAIRS.find(pair => pair.id === selectedLp)
@@ -727,60 +807,33 @@ export function LiquidityInterface() {
         }
 
       } else {
-        // Add token-token liquidity
+        // Token-token liquidity: kick off the step machine (step 1 = approve A)
         const tokenAddressA = typeof tokenA === 'object' ? tokenA.address : tokenA
         const tokenAddressB = typeof tokenB === 'object' ? tokenB.address : tokenB
-        
-        // Approve both tokens
+
+        tokenTokenParamsRef.current = {
+          tokenAddressA,
+          tokenAddressB,
+          amountADesired,
+          amountBDesired,
+          amountAMin,
+          amountBMin,
+          deadline
+        }
+        setTokenTokenStep(1)
+
         toaster.create({
-          title: 'Step 1: Token A Approval',
-          description: 'Please approve the first token in your wallet.',
+          title: 'Step 1 of 3: Approve Token A',
+          description: 'Please approve Token A in your wallet.',
           status: 'info',
           duration: 5000,
         })
 
-        const approveHashA = await writeContract({
+        writeContract({
           address: tokenAddressA,
           abi: ERC20_ABI,
           functionName: 'approve',
           args: [contractAddresses.router, amountADesired]
-        })
-
-        toaster.create({
-          title: 'Step 2: Token B Approval',
-          description: 'Please approve the second token in your wallet.',
-          status: 'info',
-          duration: 5000,
-        })
-
-        const approveHashB = await writeContract({
-          address: tokenAddressB,
-          abi: ERC20_ABI,
-          functionName: 'approve',
-          args: [contractAddresses.router, amountBDesired]
-        })
-
-        toaster.create({
-          title: 'Step 3: Add Liquidity',
-          description: 'Now confirm the add liquidity transaction in your wallet.',
-          status: 'info',
-          duration: 5000,
-        })
-        
-        await writeContract({
-          address: contractAddresses.router,
-          abi: ROUTER_ABI,
-          functionName: 'addLiquidity',
-          args: [
-            tokenAddressA,
-            tokenAddressB,
-            amountADesired,
-            amountBDesired,
-            amountAMin,
-            amountBMin,
-            address,
-            deadline
-          ]
         })
       }
 
@@ -1080,15 +1133,13 @@ export function LiquidityInterface() {
                 colorPalette={approvalNeeded ? "blue" : "green"}
                 border="1px solid"
                 borderColor="rgba(255, 215, 0, 0.3)"
-                _hover={{ 
+                _hover={{
                   borderColor: "#FFD700"
                 }}
                 onClick={handleAddLiquidity}
-                disabled={!address || !amountA || !amountB || areTokensSame() || isPending || isConfirming}
+                disabled={!address || !amountA || !amountB || areTokensSame() || isPending || isConfirming || tokenTokenStep > 0}
               >
-                {isPending || isConfirming 
-                  ? (approvalNeeded ? 'Approving...' : 'Adding Liquidity...') 
-                  : (approvalNeeded ? 'Approve PROTO Tokens' : 'Add Liquidity')}
+                {getAddButtonLabel()}
               </Button>
             </VStack>
       )}
