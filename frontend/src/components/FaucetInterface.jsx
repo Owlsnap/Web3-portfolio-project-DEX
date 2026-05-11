@@ -171,7 +171,7 @@ export function FaucetInterface() {
           <Text fontSize="13px" color="rgba(255,255,255,0.4)" textAlign="center">
             Need Base Sepolia ETH?{' '}
             <chakra.a
-              href="https://www.coinbase.com/faucets/base-ethereum-goerli-faucet"
+              href="https://www.coinbase.com/developer-platform/faucet"
               target="_blank"
               rel="noopener noreferrer"
               color="#FFD700"
