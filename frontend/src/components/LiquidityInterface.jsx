@@ -134,6 +134,23 @@ const ROUTER_ABI = [
     ],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "token", "type": "address"},
+      {"internalType": "uint256", "name": "liquidity", "type": "uint256"},
+      {"internalType": "uint256", "name": "amountTokenMin", "type": "uint256"},
+      {"internalType": "uint256", "name": "amountETHMin", "type": "uint256"},
+      {"internalType": "address", "name": "to", "type": "address"},
+      {"internalType": "uint256", "name": "deadline", "type": "uint256"}
+    ],
+    "name": "removeLiquidityETH",
+    "outputs": [
+      {"internalType": "uint256", "name": "amountToken", "type": "uint256"},
+      {"internalType": "uint256", "name": "amountETH", "type": "uint256"}
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
 
@@ -822,21 +839,43 @@ export function LiquidityInterface() {
       // Wait a bit for approval to be mined
       await new Promise(resolve => setTimeout(resolve, 3000))
 
-      // Step 2: Remove liquidity
-      await writeContract({
-        address: contractAddresses.router,
-        abi: ROUTER_ABI,
-        functionName: 'removeLiquidity',
-        args: [
-          selectedPair.tokenAAddress, // Use correct token addresses from LP pair
-          selectedPair.tokenBAddress, // Use correct token addresses from LP pair
-          liquidity,
-          0n, // amountAMin (could calculate with slippage)
-          0n, // amountBMin (could calculate with slippage)
-          address,
-          deadline
-        ]
-      })
+      // Step 2: Remove liquidity — use removeLiquidityETH when one side is WETH
+      const wethAddress = contractAddresses?.weth?.toLowerCase()
+      const tokenAIsWeth = selectedPair.tokenAAddress.toLowerCase() === wethAddress
+      const tokenBIsWeth = selectedPair.tokenBAddress.toLowerCase() === wethAddress
+      const pairHasWeth = tokenAIsWeth || tokenBIsWeth
+
+      if (pairHasWeth) {
+        const nonWethToken = tokenAIsWeth ? selectedPair.tokenBAddress : selectedPair.tokenAAddress
+        await writeContract({
+          address: contractAddresses.router,
+          abi: ROUTER_ABI,
+          functionName: 'removeLiquidityETH',
+          args: [
+            nonWethToken,
+            liquidity,
+            0n, // amountTokenMin
+            0n, // amountETHMin
+            address,
+            deadline
+          ]
+        })
+      } else {
+        await writeContract({
+          address: contractAddresses.router,
+          abi: ROUTER_ABI,
+          functionName: 'removeLiquidity',
+          args: [
+            selectedPair.tokenAAddress,
+            selectedPair.tokenBAddress,
+            liquidity,
+            0n, // amountAMin
+            0n, // amountBMin
+            address,
+            deadline
+          ]
+        })
+      }
 
       // Success handling and balance refetching is now done via useEffect when transaction is confirmed
     } catch (error) {

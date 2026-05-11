@@ -72,7 +72,7 @@ const Button = chakra('button', {
 import { toaster } from './ui/toaster'
 import { FaExclamationTriangle, FaCheckCircle, FaArrowDown, FaCog, FaSpinner } from 'react-icons/fa'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
-import { parseUnits, formatUnits, getAddress } from 'viem'
+import { parseUnits, formatUnits, getAddress, maxUint256 } from 'viem'
 import { CONTRACT_ADDRESSES } from '../config/wagmi'
 import { TokenSelector } from './TokenSelector'
 
@@ -136,7 +136,7 @@ const ROUTER_ABI_JSON = [
   }
 ]
 
-// ERC20 ABI for reading token balances
+// ERC20 ABI for reading token balances and approvals
 const ERC20_ABI = [
   {
     "inputs": [{"internalType": "address", "name": "account", "type": "address"}],
@@ -150,6 +150,26 @@ const ERC20_ABI = [
     "name": "decimals",
     "outputs": [{"internalType": "uint8", "name": "", "type": "uint8"}],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "owner", "type": "address"},
+      {"internalType": "address", "name": "spender", "type": "address"}
+    ],
+    "name": "allowance",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {"internalType": "address", "name": "spender", "type": "address"},
+      {"internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "approve",
+    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]
@@ -188,7 +208,7 @@ const PAIR_ABI = [
 export function SwapInterface() {
   const { address, chainId } = useAccount()
   const { writeContract, data: hash, isPending } = useWriteContract()
-  const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash })
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
 
   const contractAddresses = CONTRACT_ADDRESSES[chainId || 31337]
 
@@ -205,6 +225,23 @@ export function SwapInterface() {
   const [debouncedFromAmount, setDebouncedFromAmount] = useState('')
   const [isLoadingQuote, setIsLoadingQuote] = useState(false)
   const [quoteError, setQuoteError] = useState(null)
+  const [approvalInProgress, setApprovalInProgress] = useState(false)
+
+  const fromTokenAddress = fromToken !== 'ETH' && typeof fromToken === 'object'
+    ? getAddress(fromToken.address)
+    : undefined
+
+  const { data: swapAllowance, refetch: refetchSwapAllowance } = useReadContract({
+    address: fromTokenAddress,
+    abi: ERC20_ABI,
+    functionName: 'allowance',
+    args: [address, contractAddresses?.router],
+    query: {
+      enabled: !!address && !!fromTokenAddress && !!contractAddresses?.router,
+      refetchInterval: 2000
+    }
+  })
+
 
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -314,6 +351,20 @@ export function SwapInterface() {
     refetchAllBalances()
   }, [fromToken, toToken])
 
+  // After approval tx confirms, refetch allowance so button switches to "Swap"
+  useEffect(() => {
+    if (isSuccess && approvalInProgress) {
+      setApprovalInProgress(false)
+      refetchSwapAllowance()
+      toaster.create({
+        title: 'Token approved!',
+        description: 'You can now click Swap to complete the trade.',
+        status: 'success',
+        duration: 4000,
+      })
+    }
+  }, [isSuccess, approvalInProgress])
+
   // Helper function to validate and parse amount
   const parseValidAmount = (amount) => {
     if (!amount || amount === '') return 0n
@@ -329,6 +380,10 @@ export function SwapInterface() {
       return 0n
     }
   }
+
+  const needsSwapApproval = fromToken !== 'ETH' && !!fromAmount && swapAllowance !== undefined
+    ? swapAllowance < parseValidAmount(fromAmount)
+    : false
 
   // Build token path for quote
   const tokenPath = useMemo(() => {
@@ -529,6 +584,24 @@ export function SwapInterface() {
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200) // 20 minutes
       const amountIn = parseValidAmount(fromAmount)
       const amountOutMin = parseUnits((toAmountNum * (1 - parseFloat(slippage) / 100)).toString(), 18)
+
+      // For token-in swaps, approve the Router before swapping (if not already approved)
+      if (fromToken !== 'ETH' && needsSwapApproval) {
+        setApprovalInProgress(true)
+        writeContract({
+          address: fromTokenAddress,
+          abi: ERC20_ABI,
+          functionName: 'approve',
+          args: [getAddress(contractAddresses.router), maxUint256]
+        })
+        toaster.create({
+          title: 'Approval required',
+          description: `Approving ${typeof fromToken === 'object' ? fromToken.symbol : fromToken} — confirm in your wallet, then click Swap again.`,
+          status: 'info',
+          duration: 6000,
+        })
+        return
+      }
 
       if (fromToken === 'ETH') {
         // ETH -> Token
@@ -872,10 +945,11 @@ export function SwapInterface() {
           onClick={handleSwap}
           disabled={!address || !fromAmount || !toAmount || areTokensSame() || isPending || isConfirming}
         >
-          {isPending ? 'Confirming...' : 
-           isConfirming ? 'Swapping...' : 
-           !address ? 'Connect Wallet' : 
+          {isPending ? (approvalInProgress ? 'Approving...' : 'Confirming...') :
+           isConfirming ? (approvalInProgress ? 'Approving...' : 'Swapping...') :
+           !address ? 'Connect Wallet' :
            !fromAmount || !toAmount ? 'Enter an amount' :
+           needsSwapApproval ? `Approve ${typeof fromToken === 'object' ? fromToken.symbol : fromToken}` :
            'Swap'}
         </Button>
 
