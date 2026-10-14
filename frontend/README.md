@@ -113,6 +113,8 @@ npm install
 npm run dev
 ```
 
+> **Note:** Pinned to wagmi 2 until RainbowKit supports wagmi 3; the remaining `npm audit` warnings come from wagmi 2's connectors, so don't run `npm audit fix --force`.
+
 ## 🧪 Testing
 
 ### Smart Contract Tests
