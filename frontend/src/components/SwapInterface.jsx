@@ -296,7 +296,7 @@ export function SwapInterface() {
         const decimals = typeof token === 'object' ? token.decimals || 18 : 18
         return parseFloat(formatUnits(balance, decimals)).toFixed(4)
       }
-    } catch (error) {
+    } catch {
       return '0.00'
     }
   }
@@ -375,7 +375,7 @@ export function SwapInterface() {
     
     try {
       return parseUnits(amount.toString(), 18)
-    } catch (error) {
+    } catch {
       console.warn('Invalid amount:', amount)
       return 0n
     }
