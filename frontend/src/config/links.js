@@ -2,7 +2,8 @@ import { CONTRACT_ADDRESSES } from './wagmi'
 
 export const GITHUB_URL = 'https://github.com/Owlsnap/Web3-portfolio-project-DEX'
 export const GITHUB_README_URL = `${GITHUB_URL}#readme`
-export const BASE_SEPOLIA_FAUCET_URL = 'https://www.coinbase.com/developer-platform/faucet'
+// Chainlink's faucet; Coinbase's developer-platform faucet page no longer exists
+export const BASE_SEPOLIA_FAUCET_URL = 'https://faucets.chain.link/base-sepolia'
 export const BASESCAN_URL = 'https://sepolia.basescan.org'
 
 const deployed = CONTRACT_ADDRESSES[84532]

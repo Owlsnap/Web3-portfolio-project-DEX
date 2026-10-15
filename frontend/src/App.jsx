@@ -49,12 +49,13 @@ function AppInner() {
       {/* Header */}
       <Box bg="transparent" borderBottom="1px" borderColor="rgba(255, 255, 255, 0.12)" backdropFilter="blur(12px)">
         <Container maxW="1200px" py={4} px={4} mx="auto">
-          <HStack justify="space-between" w="full">
-            <HStack gap={3}>
+          <HStack justify="space-between" w="full" gap={2}>
+            <HStack gap={{ base: 1.5, md: 3 }} minW={0}>
               <img src={ProtoSwapLogo} alt="ProtoSwap Logo" className="app-logo" />
               <Text
-                fontSize={{ base: '24px', md: '38px' }}
+                fontSize={{ base: '20px', sm: '24px', md: '38px' }}
                 fontWeight="700"
+                truncate
                 style={{
                   background: 'linear-gradient(45deg, #9f7aea, #4299e1)',
                   WebkitBackgroundClip: 'text',
@@ -65,7 +66,7 @@ function AppInner() {
                 ProtoSwap
               </Text>
             </HStack>
-            <HStack gap={{ base: 2, md: 3 }}>
+            <HStack gap={{ base: 1.5, md: 3 }} flexShrink={0} whiteSpace="nowrap">
               <Button
                 onClick={() => setIsAboutOpen(true)}
                 bg="#1F1F1F"
@@ -73,10 +74,13 @@ function AppInner() {
                 border="1px solid rgba(255, 215, 0, 0.3)"
                 borderRadius="12px"
                 h="40px"
-                px={{ base: 3, md: 4 }}
+                minW={{ base: '40px', md: 'auto' }}
+                px={{ base: 0, md: 4 }}
                 fontWeight="600"
                 _hover={{ bg: '#242424' }}
                 aria-label="About ProtoSwap"
+                // The banner's "How it works" opens the same dialog; make room for the wordmark on narrow phones
+                css={{ '@media (max-width: 379px)': { display: 'none' } }}
               >
                 <FaInfoCircle />
                 <Text as="span" display={{ base: 'none', md: 'inline' }}>About</Text>
@@ -92,19 +96,21 @@ function AppInner() {
       </Box>
 
       {/* Main Content */}
-      <Box display="flex" justifyContent="center" alignItems="center" minH="calc(100vh - 80px)" py={8}>
-        <VStack gap={8} w="full" maxW="420px">
-          {/* Navigation Tabs */}
-          <HStack gap={1} bg="#1F1F1F" p={1} borderRadius="16px" w="fit-content" mx="auto" border="1px solid rgba(255, 215, 0, 0.2)">
+      <Box display="flex" justifyContent="center" alignItems="center" minH="calc(100vh - 80px)" py={{ base: 6, md: 8 }} px={4}>
+        <VStack gap={{ base: 6, md: 8 }} w="full" maxW="420px">
+          {/* Navigation Tabs: full-width with stacked icon and label on phones */}
+          <HStack gap={1} bg="#1F1F1F" p={1} borderRadius="16px" w={{ base: 'full', sm: 'fit-content' }} mx="auto" border="1px solid rgba(255, 215, 0, 0.2)">
             {tabs.map(tab => (
               <Button
                 key={tab.id}
-                px={4}
-                py={3}
+                flex={{ base: 1, sm: 'initial' }}
+                h={{ base: 'auto', sm: '10' }}
+                px={{ base: 1, sm: 4 }}
+                py={{ base: 2, sm: 3 }}
                 borderRadius="12px"
                 bg={activeTab === tab.id ? '#DC143C' : 'transparent'}
                 shadow={activeTab === tab.id ? '0 4px 12px rgba(220, 20, 60, 0.3)' : 'none'}
-                fontSize="16px"
+                fontSize={{ base: '13px', sm: '16px' }}
                 fontWeight={activeTab === tab.id ? '600' : '500'}
                 color={activeTab === tab.id ? 'white' : '#FFD700'}
                 _hover={{
@@ -114,10 +120,10 @@ function AppInner() {
                 transition="all 0.2s"
                 onClick={() => setActiveTab(tab.id)}
               >
-                <HStack gap={2}>
+                <Box display="flex" flexDir={{ base: 'column', sm: 'row' }} alignItems="center" gap={{ base: 1, sm: 2 }}>
                   {tab.icon}
                   <Text>{tab.label}</Text>
-                </HStack>
+                </Box>
               </Button>
             ))}
           </HStack>
@@ -133,7 +139,7 @@ function AppInner() {
             <Text fontSize="14px" color="rgba(255, 255, 255, 0.5)">
               Built with Solidity, Foundry, React, and Wagmi
             </Text>
-            <HStack justify="center" gap={4} mt={2} fontSize="14px">
+            <HStack justify="center" gap={4} mt={2} fontSize="14px" flexWrap="wrap">
               <FooterLink href={GITHUB_URL} target="_blank" rel="noopener noreferrer" color="rgba(255, 255, 255, 0.6)" _hover={{ color: '#FFD700' }} display="inline-flex" alignItems="center" gap={1.5}>
                 <FaGithub /> Source
               </FooterLink>

@@ -4,6 +4,7 @@ import { chakra } from '@chakra-ui/react'
 import { FaTint, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from 'wagmi'
 import { CONTRACT_ADDRESSES } from '../config/wagmi'
+import { BASE_SEPOLIA_FAUCET_URL } from '../config/links'
 import { toaster } from './ui/toaster'
 import USDCLogo from '../assets/usd-coin-usdc-logo.svg'
 import ProtoLogo from '../assets/proto-logo-vector.png'
@@ -92,9 +93,10 @@ export function FaucetInterface() {
 
   return (
     <Box
+      w="full"
       maxW="420px"
       mx="auto"
-      p={5}
+      p={{ base: 4, sm: 5 }}
       borderRadius="24px"
       border="1px"
       borderColor="rgba(255, 255, 255, 0.12)"
@@ -138,9 +140,9 @@ export function FaucetInterface() {
             bg="rgba(255, 255, 255, 0.06)"
             border="1px solid rgba(255, 255, 255, 0.12)"
           >
-            <HStack justify="space-between">
-              <HStack gap={3}>
-                <Box w="36px" h="36px">
+            <HStack justify="space-between" gap={3}>
+              <HStack gap={3} minW={0}>
+                <Box w="36px" h="36px" flexShrink={0}>
                   <img src={token.logo} alt={token.symbol} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%' }} />
                 </Box>
                 <VStack align="start" gap={0}>
@@ -155,7 +157,9 @@ export function FaucetInterface() {
                 color="white"
                 borderRadius="14px"
                 h="42px"
-                px={5}
+                px={{ base: 4, sm: 5 }}
+                flexShrink={0}
+                whiteSpace="nowrap"
                 fontSize="15px"
                 _hover={{ bg: '#B71C1C' }}
                 _disabled={{ bg: '#393939', color: 'rgba(255,255,255,0.4)', cursor: 'not-allowed' }}
@@ -181,13 +185,13 @@ export function FaucetInterface() {
           <Text fontSize="13px" color="rgba(255,255,255,0.4)" textAlign="center">
             Need Base Sepolia ETH?{' '}
             <chakra.a
-              href="https://www.coinbase.com/developer-platform/faucet"
+              href={BASE_SEPOLIA_FAUCET_URL}
               target="_blank"
               rel="noopener noreferrer"
               color="#FFD700"
               textDecoration="underline"
             >
-              Get it from the Base faucet
+              Get it from the Chainlink faucet
             </chakra.a>
           </Text>
         </Box>

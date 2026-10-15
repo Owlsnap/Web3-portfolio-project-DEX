@@ -943,9 +943,10 @@ export function LiquidityInterface() {
 
   return (
     <Box
+      w="full"
       maxW="md"
       mx="auto"
-      p={6}
+      p={{ base: 4, sm: 6 }}
       borderRadius="xl"
       border="1px"
       borderColor="rgba(255, 215, 0, 0.2)"
@@ -953,14 +954,15 @@ export function LiquidityInterface() {
       shadow="0 20px 40px rgba(0, 0, 0, 0.1)"
     >
       {/* Navigation Tabs */}
-      <HStack gap={1} bg="#1F1F1F" p={1} borderRadius="16px" w="fit-content" mx="auto" border="1px solid rgba(255, 215, 0, 0.2)" mb={6}>
+      <HStack gap={1} bg="#1F1F1F" p={1} borderRadius="16px" w={{ base: "full", sm: "fit-content" }} mx="auto" border="1px solid rgba(255, 215, 0, 0.2)" mb={6}>
         <Button
-          px={6}
+          flex={{ base: 1, sm: "initial" }}
+          px={{ base: 3, sm: 6 }}
           py={3}
           borderRadius="12px"
           bg={activeTab === 'add' ? "#DC143C" : "transparent"}
           shadow={activeTab === 'add' ? "0 4px 12px rgba(220, 20, 60, 0.3)" : "none"}
-          fontSize="16px"
+          fontSize={{ base: "15px", sm: "16px" }}
           fontWeight={activeTab === 'add' ? "600" : "500"}
           color={activeTab === 'add' ? "white" : "#FFD700"}
           _hover={{
@@ -972,16 +974,17 @@ export function LiquidityInterface() {
         >
           <HStack gap={2}>
             <FaPlus />
-            <Text>Add Liquidity</Text>
+            <Text>Add<Text as="span" display={{ base: "none", sm: "inline" }}> Liquidity</Text></Text>
           </HStack>
         </Button>
         <Button
-          px={6}
+          flex={{ base: 1, sm: "initial" }}
+          px={{ base: 3, sm: 6 }}
           py={3}
           borderRadius="12px"
           bg={activeTab === 'remove' ? "#DC143C" : "transparent"}
           shadow={activeTab === 'remove' ? "0 4px 12px rgba(220, 20, 60, 0.3)" : "none"}
-          fontSize="16px"
+          fontSize={{ base: "15px", sm: "16px" }}
           fontWeight={activeTab === 'remove' ? "600" : "500"}
           color={activeTab === 'remove' ? "white" : "#FFD700"}
           _hover={{
@@ -993,7 +996,7 @@ export function LiquidityInterface() {
         >
           <HStack gap={2}>
             <FaMinus />
-            <Text>Remove Liquidity</Text>
+            <Text>Remove<Text as="span" display={{ base: "none", sm: "inline" }}> Liquidity</Text></Text>
           </HStack>
         </Button>
       </HStack>
@@ -1018,6 +1021,7 @@ export function LiquidityInterface() {
                       value={amountA}
                       onChange={(e) => setAmountA(e.target.value)}
                       fontSize="xl"
+                      minW={0}
                       fontWeight="bold"
                       border="none"
                       bg="transparent"
@@ -1066,6 +1070,7 @@ export function LiquidityInterface() {
                       value={amountB}
                       onChange={(e) => setAmountB(e.target.value)}
                       fontSize="xl"
+                      minW={0}
                       fontWeight="bold"
                       border="none"
                       bg="transparent"
@@ -1164,6 +1169,7 @@ export function LiquidityInterface() {
                       value={lpAmount}
                       onChange={(e) => setLpAmount(e.target.value)}
                       fontSize="xl"
+                      minW={0}
                       fontWeight="bold"
                       border="none"
                       bg="transparent"

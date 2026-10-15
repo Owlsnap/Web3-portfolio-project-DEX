@@ -10,7 +10,7 @@ A full-stack decentralized exchange built from scratch as a portfolio project: a
 
 1. Install a browser wallet (MetaMask, Rabby, Coinbase Wallet…) and open the [live demo](https://protoswap-lemon.vercel.app).
 2. Connect and switch to **Base Sepolia**. The app shows a one-click switch button if you're on another network.
-3. Get free test ETH from the [Base Sepolia faucet](https://www.coinbase.com/developer-platform/faucet).
+3. Get free test ETH from the [Chainlink Base Sepolia faucet](https://faucets.chain.link/base-sepolia).
 4. Claim test USDC and PROTO on the **Faucet** tab (once every 24 hours).
 5. Swap between ETH, PROTO and USDC, or provide liquidity on the **Pool** tab.
 6. On the **Govern** tab, activate your PROTO votes, propose a fee change, vote, and execute it. A proposal goes from creation to execution in about an hour.

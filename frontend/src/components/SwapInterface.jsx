@@ -70,7 +70,7 @@ const Button = chakra('button', {
 
 // Select component removed - now using TokenSelector
 import { toaster } from './ui/toaster'
-import { FaExclamationTriangle, FaCheckCircle, FaArrowDown, FaCog, FaSpinner } from 'react-icons/fa'
+import { FaExclamationTriangle, FaCheckCircle, FaArrowDown, FaSpinner } from 'react-icons/fa'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from 'wagmi'
 import { parseUnits, formatUnits, getAddress, maxUint256 } from 'viem'
 import { CONTRACT_ADDRESSES } from '../config/wagmi'
@@ -681,9 +681,10 @@ export function SwapInterface() {
 
   return (
     <Box
+      w="full"
       maxW="420px"
       mx="auto"
-      p={5}
+      p={{ base: 4, sm: 5 }}
       borderRadius="24px"
       border="1px"
       borderColor="rgba(255, 255, 255, 0.12)"
@@ -694,9 +695,6 @@ export function SwapInterface() {
         {/* Header */}
         <HStack justify="space-between" w="full" mb={3}>
           <Text fontSize="22px" fontWeight="700" color="white">Swap</Text>
-          <Button size="sm" variant="ghost" p={2} borderRadius="12px" _hover={{ bg: "#242424" }}>
-            <FaCog color="rgba(255, 255, 255, 0.7)" />
-          </Button>
         </HStack>
 
         {/* From Token */}
@@ -723,7 +721,8 @@ export function SwapInterface() {
                 placeholder="0.0"
                 value={fromAmount}
                 onChange={(e) => handleAmountChange(e.target.value)}
-                fontSize="28px"
+                fontSize={{ base: '24px', sm: '28px' }}
+                minW={0}
                 fontWeight="700"
                 border="none"
                 bg="transparent"
@@ -806,12 +805,13 @@ export function SwapInterface() {
               </Text>
             </HStack>
             <HStack w="full" gap={3}>
-              <Box position="relative" flex={1}>
+              <Box position="relative" flex={1} minW={0}>
                 <Input
                   placeholder={isLoadingQuote ? "Getting price..." : "0.0"}
                   value={isLoadingQuote ? "" : toAmount}
                   readOnly
-                  fontSize="28px"
+                  w="full"
+                  fontSize={{ base: '24px', sm: '28px' }}
                   fontWeight="700"
                   border="none"
                   bg="transparent"

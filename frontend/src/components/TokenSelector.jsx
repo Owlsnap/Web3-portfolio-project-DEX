@@ -122,7 +122,8 @@ export function TokenSelector({
         fontSize="16px"
         fontWeight="600"
         color="#FFD700"
-        minW="175px"
+        minW={{ base: '128px', sm: '175px' }}
+        flexShrink={0}
         h="48px"
         px={3}
       >
@@ -171,8 +172,10 @@ export function TokenSelector({
             display="flex"
             flexDir="column"
             alignItems="center"
-            pt="80px"
-            px={6}
+            pt={{ base: '72px', md: '80px' }}
+            pb={6}
+            px={{ base: 4, md: 6 }}
+            overflowY="auto"
             onClick={() => setIsOpen(false)}
           >
             {/* Close button — top right corner */}
@@ -231,11 +234,12 @@ export function TokenSelector({
               {/* Token Grid */}
               <Box
                 display="grid"
-                gridTemplateColumns="repeat(4, 175px)"
-                gap={5}
+                gridTemplateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 175px)' }}
+                gap={{ base: 3, md: 5 }}
                 p={2}
                 mx="auto"
-                w="fit-content"
+                w={{ base: 'full', md: 'fit-content' }}
+                maxW={{ base: '400px', md: 'none' }}
               >
                 {filteredTokens.map((token) => {
                   const style = TOKEN_CARD_STYLE[token.symbol] || {
@@ -248,8 +252,8 @@ export function TokenSelector({
                       cursor="pointer"
                       borderRadius="22px"
                       background={style.bg}
-                      w="175px"
-                      h="175px"
+                      w={{ base: 'full', md: '175px' }}
+                      aspectRatio={1}
                       display="flex"
                       flexDir="column"
                       alignItems="center"
@@ -262,8 +266,8 @@ export function TokenSelector({
                       boxShadow="0 8px 32px rgba(0,0,0,0.35)"
                     >
                       <Box
-                        w="96px"
-                        h="96px"
+                        w={{ base: '72px', md: '96px' }}
+                        h={{ base: '72px', md: '96px' }}
                         borderRadius="50%"
                         bg={style.iconBg}
                         display="flex"
