@@ -44,6 +44,7 @@ src/
 ├── DEXGovernor.sol      # Main governance contract (proposals, voting, execution)
 ├── DEXTimelock.sol      # Security delays for governance actions
 ├── Treasury.sol         # Community-controlled fund management
+├── TokenFaucet.sol      # Hands out pre-funded PROTO on testnet so visitors can vote
 └── FlashLoanExample.sol # Flash loan implementation example
 ```
 
@@ -61,7 +62,7 @@ Factory (governance-controlled)
 ├── Creates → Pair (ETH/USDC)
 ├── Creates → Pair (DAI/USDT) 
 ├── Creates → Pair (WBTC/DAI)
-└── Sends fees to → Treasury
+└── feeTo → Treasury (pairs mint the protocol fee there as LP tokens)
 
 Router (implemented)
 ├── Interacts with → Factory (find pairs, create pairs)
@@ -77,10 +78,11 @@ Router (implemented)
 - [x] **Factory.sol** - Pair creation and management with CREATE2
 - [x] **Pair.sol** - Complete AMM implementation with:
   - [x] Liquidity provision (mint/burn LP tokens)
-  - [x] Token swapping with 0.3% fees
+  - [x] Token swapping with a governance-set fee (0.3% default)
   - [x] Constant product formula enforcement
-  - [x] Flash loan capabilities
+  - [x] Flash loan capabilities with a separate flash loan fee
   - [x] Price oracle accumulator
+  - [x] Uniswap V2-style protocol fee (1/6 of trading fees, minted to `feeTo`)
   - [x] Emergency functions (skim/sync)
 
 ### Phase 2: Governance & Treasury System ✅
@@ -89,25 +91,26 @@ Router (implemented)
   - [x] Timestamp-based checkpoints for voting power
   - [x] Token distribution and ownership management
 - [x] **DEXGovernor.sol** - OpenZeppelin Governor-based governance
-  - [x] Proposal creation with threshold requirements (1% of supply)
-  - [x] Voting system with 4% quorum requirement
-  - [x] 1-day voting delay, 1-week voting period
+  - [x] Proposal creation with a configurable threshold
+  - [x] Configurable quorum (fraction of supply, down to 0.001%)
+  - [x] Configurable voting delay and period
   - [x] Integration with timelock for security
+  - [x] On-chain proposal storage (`GovernorStorage`) so frontends can list proposals and queue/execute by ID
 - [x] **DEXTimelock.sol** - Security delays for governance execution
-  - [x] 2-day execution delay for all governance actions
+  - [x] Configurable execution delay for all governance actions
   - [x] Emergency executor roles and access control
   - [x] OpenZeppelin TimelockController integration
 - [x] **Treasury.sol** - Community-controlled fund management
   - [x] Multi-token support (ETH + ERC20)
   - [x] Governance-controlled withdrawals and distributions
-  - [x] Automated fee collection from Factory
+  - [x] Receives the protocol fee once governance sets `feeTo`
   - [x] Grant distribution and reward programs
   - [x] Emergency recovery functions
 - [x] **Factory Integration** - Governance-controlled DEX parameters
   - [x] Community control over trading fees (0.05%-1.0%)
   - [x] Flash loan fee management (0.01%-0.5%)
-  - [x] Fee recipient configuration
-  - [x] Treasury integration for automated fee collection
+  - [x] Protocol fee recipient (`feeTo`) configuration
+  - [x] Treasury registration
 
 ### Phase 3: User Interface Contracts ✅
 - [x] **Router.sol** - User-friendly interface
@@ -141,7 +144,7 @@ Router (implemented)
   - [x] Treasury operations and integration tests
 - [x] **Integration tests** for complete user flows
   - [x] Governance + DEX parameter control tests
-  - [x] Treasury + Factory fee collection tests
+  - [x] Governed fees take effect in swaps, flash loans and the protocol fee (`GovernedFeesTest`)
   - [x] Multi-action governance proposals
 - [x] **Critical bug fixes** and timing issues
   - [x] ERC20Votes checkpoint timing fixes
@@ -149,29 +152,29 @@ Router (implemented)
   - [x] Quorum requirement validation
   - [x] K-invariant violation in Pair contract swap function
   - [x] Flash loan invariant enforcement and validation
-- [ ] **Fuzz testing** for edge cases and invariants
+- [x] **Fuzz testing**: swaps match Router quotes at every allowed fee
 - [ ] **Fork testing** against mainnet conditions
 - [ ] **Gas optimization** analysis
 
 ### Phase 6: Deployment 🚀
-- [ ] **Local deployment** scripts
-- [ ] **Testnet deployment** (Sepolia, Base Sepolia)
-- [ ] **Contract verification** on explorers
-- [ ] **Documentation** and integration guides
+- [x] **Local deployment** scripts
+- [x] **Testnet deployment** (Base Sepolia), including governance
+- [x] **Contract verification** on Basescan
+- [x] **Documentation** (see the root README)
 
 ## 🔧 Key Features Implemented
 
 ### **Governance System**
 - ✅ **DEX Token**: ERC20Votes with delegation and checkpoints
 - ✅ **Governor Contract**: OpenZeppelin-based governance with proposals, voting, execution
-- ✅ **Timelock Security**: 2-day delays on all governance actions
-- ✅ **Community Control**: 1% proposal threshold, 4% quorum requirement
+- ✅ **Timelock Security**: Delay between a proposal passing and its execution
+- ✅ **Community Control**: Configurable proposal threshold and quorum
 - ✅ **Parameter Management**: Community control over DEX fees and settings
 
 ### **Treasury System**
 - ✅ **Multi-Asset Support**: Handle ETH and any ERC20 tokens
 - ✅ **Governance Control**: All operations require community voting
-- ✅ **Automated Collection**: Fees automatically flow from Factory to Treasury
+- ✅ **Protocol Fee**: Receives 1/6 of trading fees as LP tokens when governance turns the fee on
 - ✅ **Flexible Distributions**: Support grants, rewards, operational expenses
 - ✅ **Emergency Functions**: Governance-controlled recovery mechanisms
 
@@ -179,14 +182,14 @@ Router (implemented)
 - ✅ CREATE2 deterministic pair addresses
 - ✅ Prevents duplicate pairs
 - ✅ **Governance-Controlled Fees**: Community sets trading fees (0.05%-1.0%)
-- ✅ **Treasury Integration**: Automated fee collection system
+- ✅ **Protocol Fee Switch**: Governance points `feeTo` at the treasury (or turns it off)
 - ✅ Complete pair registry
 
 ### **Pair Contract**
 - ✅ **AMM Core**: Constant product formula (x * y = k)
 - ✅ **Liquidity Management**: Mint/burn LP tokens with proper accounting
-- ✅ **Trading**: Swap functionality with 0.3% fees
-- ✅ **Flash Loans**: Optimistic execution with callback support
+- ✅ **Trading**: Swaps charge the Factory's governance-set fee (0.3% default)
+- ✅ **Flash Loans**: Optimistic execution with callback support, charged the flash loan fee
 - ✅ **Price Oracle**: Cumulative price tracking for external use
 - ✅ **Emergency Functions**: skim() and sync() for edge cases
 - ✅ **Security**: Reentrancy protection and overflow checks
@@ -329,16 +332,18 @@ This project demonstrates mastery of:
 ## 🏛️ Governance System
 
 ### **Governance Flow**
+Values are the Base Sepolia demo settings from `script/DeployBaseSepolia.s.sol`, tuned so a visitor
+can run a proposal in about an hour. A mainnet deployment would use days (e.g. 1-day delay, 1-week vote).
 ```
-1. Proposal Creation (1% of DEX tokens required)
+1. Proposal Creation (1,000 PROTO of votes required)
    ↓
-2. Voting Delay (1 day)
+2. Voting Delay (1 minute)
    ↓  
-3. Voting Period (1 week, 4% quorum required)
+3. Voting Period (1 hour, quorum 0.001% of supply = 10,000 PROTO)
    ↓
 4. Timelock Queue (if passed)
    ↓
-5. Execution Delay (2 days)
+5. Execution Delay (5 minutes)
    ↓
 6. Execution (anyone can execute)
 ```
@@ -346,19 +351,20 @@ This project demonstrates mastery of:
 ### **What Governance Controls**
 - **Trading Fees**: Community sets fees between 0.05% - 1.0%
 - **Flash Loan Fees**: Independent control from 0.01% - 0.5%
-- **Fee Recipients**: Where protocol fees are sent
+- **Protocol Fee**: Whether 1/6 of trading fees goes to the treasury (`feeTo`)
 - **Treasury Operations**: All fund withdrawals and distributions
 - **Parameter Updates**: Any protocol configuration changes
 
 ### **Treasury Capabilities**
-- **Automated Fee Collection**: Factory sends fees directly to Treasury
+- **Protocol Fee**: Accumulates LP tokens while the fee switch is on
 - **Grant Programs**: Fund development, audits, marketing
 - **Liquidity Mining Rewards**: Distribute tokens to users
 - **Operational Expenses**: Pay for infrastructure and services
 - **Emergency Recovery**: Community-controlled fund recovery
 
-### **Governance Token (DEX)**
-- **Total Supply**: 1 billion DEX tokens
+### **Governance Token (PROTO)**
+- **Total Supply**: 1 billion PROTO
+- **Testnet Faucet**: `TokenFaucet` gives 10,000 PROTO per address per day
 - **Voting Power**: Based on delegated token holdings
 - **Delegation**: Users must delegate to themselves or others to vote
 - **Checkpoints**: Historical voting power tracking for proposals
@@ -389,23 +395,21 @@ liquidity = min(
 
 ### **Swap Output Calculation**
 ```solidity
-// With 0.3% fee
-amountInWithFee = amountIn * 997
+// fee in basis points, read from the Factory (30 = 0.3%)
+amountInWithFee = amountIn * (10000 - fee)
 numerator = amountInWithFee * reserveOut  
-denominator = reserveIn * 1000 + amountInWithFee
+denominator = reserveIn * 10000 + amountInWithFee
 amountOut = numerator / denominator
 ```
 
 ## 🌐 Deployment Targets
 
 - **Local Development**: Anvil local blockchain
-- **Ethereum Sepolia**: Primary testnet deployment
-- **Base Sepolia**: L2 testing environment
-- **Polygon Mumbai**: Alternative L2 testing (if available)
+- **Base Sepolia**: Live deployment (see the root README for addresses)
 
 ## 📄 License
 
-MIT License - Educational and development purposes
+MIT License - see [LICENSE](../LICENSE)
 
 ---
 
