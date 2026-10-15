@@ -83,7 +83,7 @@ contract GovernanceDEXIntegrationTest is Test {
         timelock = new DEXTimelock(TIMELOCK_DELAY, proposers, executors, owner);
         
         // Deploy governor
-        governor = new DEXGovernor(dexToken, timelock, VOTING_DELAY, VOTING_PERIOD, PROPOSAL_THRESHOLD);
+        governor = new DEXGovernor(dexToken, timelock, VOTING_DELAY, VOTING_PERIOD, PROPOSAL_THRESHOLD, 4_000); // 4% quorum
         
         // Grant governor proposer role on timelock
         bytes32 proposerRole = timelock.PROPOSER_ROLE();

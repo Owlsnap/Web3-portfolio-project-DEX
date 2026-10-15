@@ -74,7 +74,8 @@ contract GovernanceTest is Test {
             timelock,
             VOTING_DELAY,
             VOTING_PERIOD,
-            PROPOSAL_THRESHOLD
+            PROPOSAL_THRESHOLD,
+            4_000 // 4% quorum
         );
         console.log("DEXGovernor deployed");
         

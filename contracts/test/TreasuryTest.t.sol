@@ -56,7 +56,8 @@ contract TreasuryTest is Test {
             timelock,
             uint48(VOTING_DELAY),
             uint32(VOTING_PERIOD), 
-            PROPOSAL_THRESHOLD
+            PROPOSAL_THRESHOLD,
+            4_000 // 4% quorum
         );
 
         // Setup governance permissions
