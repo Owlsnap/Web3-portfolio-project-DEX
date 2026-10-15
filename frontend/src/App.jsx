@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { WagmiProvider, useAccount, useChainId } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Button, ChakraProvider, defaultSystem } from '@chakra-ui/react'
+import { Button, ChakraProvider, defaultSystem, chakra } from '@chakra-ui/react'
 import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import {
@@ -11,36 +11,27 @@ import {
   HStack,
   Text,
 } from '@chakra-ui/react'
-import { FaExchangeAlt, FaWater, FaTint } from 'react-icons/fa'
+import { FaExchangeAlt, FaWater, FaTint, FaInfoCircle, FaGithub } from 'react-icons/fa'
 import ProtoSwapLogo from './assets/proto-logo-vector.png'
 
-import { config, SUPPORTED_CHAIN_IDS } from './config/wagmi'
+import { config } from './config/wagmi'
+import { GITHUB_URL, VERIFIED_CONTRACTS, basescanCodeUrl } from './config/links'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { SwapInterface } from './components/SwapInterface'
 import { LiquidityInterface } from './components/LiquidityInterface'
 import { FaucetInterface } from './components/FaucetInterface'
+import { TestnetBanner } from './components/TestnetBanner'
+import { AboutDialog } from './components/AboutDialog'
 import { Toaster } from './components/ui/toaster'
 import './App.css'
 
 const queryClient = new QueryClient()
-
-function WrongNetworkBanner() {
-  const { isConnected } = useAccount()
-  const chainId = useChainId()
-
-  if (!isConnected || SUPPORTED_CHAIN_IDS.includes(chainId)) return null
-
-  return (
-    <Box bg="rgba(220, 20, 60, 0.9)" py={2} textAlign="center">
-      <Text fontSize="14px" fontWeight="600" color="white">
-        Unsupported network — please switch to Base Sepolia in your wallet.
-      </Text>
-    </Box>
-  )
-}
+const FooterLink = chakra('a')
 
 function AppInner() {
   const [activeTab, setActiveTab] = useState('swap')
+  const [isAboutOpen, setIsAboutOpen] = useState(false)
+  const router = VERIFIED_CONTRACTS.find(c => c.name === 'Router')
 
   const tabs = [
     { id: 'swap',   label: 'Swap',   icon: <FaExchangeAlt /> },
@@ -50,20 +41,17 @@ function AppInner() {
 
   return (
     <Box minH="100vh" bg="transparent">
-      <WrongNetworkBanner />
+      <TestnetBanner onOpenAbout={() => setIsAboutOpen(true)} />
+      <AboutDialog isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
 
       {/* Header */}
       <Box bg="transparent" borderBottom="1px" borderColor="rgba(255, 255, 255, 0.12)" backdropFilter="blur(12px)">
-        <Container maxW="1200px" py={4} mx="auto">
+        <Container maxW="1200px" py={4} px={4} mx="auto">
           <HStack justify="space-between" w="full">
             <HStack gap={3}>
-              <img
-                src={ProtoSwapLogo}
-                alt="ProtoSwap Logo"
-                style={{ width: '62px', height: '62px', objectFit: 'contain', borderRadius: '8px' }}
-              />
+              <img src={ProtoSwapLogo} alt="ProtoSwap Logo" className="app-logo" />
               <Text
-                fontSize="38px"
+                fontSize={{ base: '24px', md: '38px' }}
                 fontWeight="700"
                 style={{
                   background: 'linear-gradient(45deg, #9f7aea, #4299e1)',
@@ -75,7 +63,28 @@ function AppInner() {
                 ProtoSwap
               </Text>
             </HStack>
-            <ConnectButton />
+            <HStack gap={{ base: 2, md: 3 }}>
+              <Button
+                onClick={() => setIsAboutOpen(true)}
+                bg="#1F1F1F"
+                color="#FFD700"
+                border="1px solid rgba(255, 215, 0, 0.3)"
+                borderRadius="12px"
+                h="40px"
+                px={{ base: 3, md: 4 }}
+                fontWeight="600"
+                _hover={{ bg: '#242424' }}
+                aria-label="About ProtoSwap"
+              >
+                <FaInfoCircle />
+                <Text as="span" display={{ base: 'none', md: 'inline' }}>About</Text>
+              </Button>
+              <ConnectButton
+                accountStatus={{ smallScreen: 'avatar', largeScreen: 'full' }}
+                chainStatus={{ smallScreen: 'icon', largeScreen: 'full' }}
+                showBalance={{ smallScreen: false, largeScreen: true }}
+              />
+            </HStack>
           </HStack>
         </Container>
       </Box>
@@ -121,6 +130,14 @@ function AppInner() {
             <Text fontSize="14px" color="rgba(255, 255, 255, 0.5)">
               Built with Solidity, Foundry, React, and Wagmi
             </Text>
+            <HStack justify="center" gap={4} mt={2} fontSize="14px">
+              <FooterLink href={GITHUB_URL} target="_blank" rel="noopener noreferrer" color="rgba(255, 255, 255, 0.6)" _hover={{ color: '#FFD700' }} display="inline-flex" alignItems="center" gap={1.5}>
+                <FaGithub /> Source
+              </FooterLink>
+              <FooterLink href={basescanCodeUrl(router.address)} target="_blank" rel="noopener noreferrer" color="rgba(255, 255, 255, 0.6)" _hover={{ color: '#FFD700' }}>
+                Verified contracts ↗
+              </FooterLink>
+            </HStack>
           </Box>
         </VStack>
       </Box>

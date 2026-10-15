@@ -131,3 +131,17 @@ input:focus, select:focus {
     transform: rotate(360deg);
   }
 }
+
+.app-logo {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+@media (max-width: 640px) {
+  .app-logo {
+    width: 40px;
+    height: 40px;
+  }
+}
