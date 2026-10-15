@@ -11,7 +11,7 @@ import {
   HStack,
   Text,
 } from '@chakra-ui/react'
-import { FaExchangeAlt, FaWater, FaTint, FaInfoCircle, FaGithub } from 'react-icons/fa'
+import { FaExchangeAlt, FaWater, FaTint, FaLandmark, FaInfoCircle, FaGithub } from 'react-icons/fa'
 import ProtoSwapLogo from './assets/proto-logo-vector.png'
 
 import { config } from './config/wagmi'
@@ -20,6 +20,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { SwapInterface } from './components/SwapInterface'
 import { LiquidityInterface } from './components/LiquidityInterface'
 import { FaucetInterface } from './components/FaucetInterface'
+import { GovernanceInterface } from './components/GovernanceInterface'
 import { TestnetBanner } from './components/TestnetBanner'
 import { AboutDialog } from './components/AboutDialog'
 import { Toaster } from './components/ui/toaster'
@@ -37,6 +38,7 @@ function AppInner() {
     { id: 'swap',   label: 'Swap',   icon: <FaExchangeAlt /> },
     { id: 'pool',   label: 'Pool',   icon: <FaWater /> },
     { id: 'faucet', label: 'Faucet', icon: <FaTint /> },
+    { id: 'govern', label: 'Govern', icon: <FaLandmark /> },
   ]
 
   return (
@@ -97,7 +99,7 @@ function AppInner() {
             {tabs.map(tab => (
               <Button
                 key={tab.id}
-                px={6}
+                px={4}
                 py={3}
                 borderRadius="12px"
                 bg={activeTab === tab.id ? '#DC143C' : 'transparent'}
@@ -124,6 +126,7 @@ function AppInner() {
           {activeTab === 'swap'   && <SwapInterface />}
           {activeTab === 'pool'   && <LiquidityInterface />}
           {activeTab === 'faucet' && <FaucetInterface />}
+          {activeTab === 'govern' && <GovernanceInterface />}
 
           {/* Footer */}
           <Box pt={8} textAlign="center">

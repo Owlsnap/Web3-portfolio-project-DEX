@@ -13,11 +13,16 @@ const BASE_SEPOLIA_RPC = import.meta.env.VITE_BASE_SEPOLIA_RPC || 'https://sepol
 export const CONTRACT_ADDRESSES = {
   // Base Sepolia (chainId 84532) — update after deployment
   84532: {
-    factory:  getAddress('0x43F2994dAF377A52F31ddBDD8D47D80865375a59'),
-    router:   getAddress('0x424AbfFeD5Efdd3619D53262ca116A2076EfFF3f'),
+    factory:  getAddress('0x85ECd75a865E182B32767719c2489d3d6F38F3B6'),
+    router:   getAddress('0xB48D44bE7A38EB70524D88A3896a175351044DDb'),
     weth:     getAddress('0xb0F800aa76233B5d89e31bFE37cDc2CBcC32ad39'),
     dexToken: getAddress('0x599C2c44aAB318D6537A5C873aBa4654A4f87db4'),
     mockUsdc: getAddress('0x7DD41ED04666FFE286f288AB1393bc261c2E0794'),
+    // Governance
+    governor:    getAddress('0x6b9e3E8d59840147021757606cc755f596e3a983'),
+    timelock:    getAddress('0xde10E2b5B770bA067022982C111009d51e2927b5'),
+    treasury:    getAddress('0xc2A89b8597DBcA98EE311e52B0092f56F679Ec55'),
+    protoFaucet: getAddress('0xF6F081a4eF1aF165165386F3C7e6aB87A230BACD'),
   },
 
   // Local Anvil/Hardhat — existing deployment for local dev
@@ -27,6 +32,10 @@ export const CONTRACT_ADDRESSES = {
     weth:     getAddress('0xe7f1725e7734ce288f8367e1bb143e90bb3f0512'),
     dexToken: getAddress('0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9'),
     mockUsdc: null,
+    governor:    null,
+    timelock:    null,
+    treasury:    null,
+    protoFaucet: null,
   },
 }
 

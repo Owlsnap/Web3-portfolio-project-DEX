@@ -6,6 +6,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId 
 import { CONTRACT_ADDRESSES } from '../config/wagmi'
 import { toaster } from './ui/toaster'
 import USDCLogo from '../assets/usd-coin-usdc-logo.svg'
+import ProtoLogo from '../assets/proto-logo-vector.png'
 
 const Button = chakra('button', {
   base: {
@@ -32,6 +33,13 @@ const FAUCET_ABI = [
     stateMutability: 'nonpayable',
   },
   {
+    name: 'claim',
+    type: 'function',
+    inputs: [],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+  {
     name: 'lastFaucetClaim',
     type: 'function',
     inputs: [{ name: '', type: 'address' }],
@@ -41,7 +49,9 @@ const FAUCET_ABI = [
 ]
 
 const FAUCET_TOKENS = [
-  { symbol: 'USDC', name: 'Mock USDC', key: 'mockUsdc', logo: USDCLogo, amount: '1,000' },
+  // MockERC20 mints on faucet(); PROTO has a fixed supply, so a pre-funded TokenFaucet hands it out via claim()
+  { symbol: 'USDC', name: 'Mock USDC', key: 'mockUsdc', logo: USDCLogo, amount: '1,000', functionName: 'faucet' },
+  { symbol: 'PROTO', name: 'Proto Token (voting power)', key: 'protoFaucet', logo: ProtoLogo, amount: '10,000', functionName: 'claim' },
 ]
 
 export function FaucetInterface() {
@@ -52,7 +62,7 @@ export function FaucetInterface() {
   const { isLoading: isConfirming } = useWaitForTransactionReceipt({ hash })
   const [claimingToken, setClaimingToken] = useState(null)
 
-  const handleClaim = async (tokenKey, symbol) => {
+  const handleClaim = async ({ key: tokenKey, symbol, amount, functionName }) => {
     const tokenAddress = contracts?.[tokenKey]
     if (!tokenAddress) return
     setClaimingToken(tokenKey)
@@ -60,11 +70,11 @@ export function FaucetInterface() {
       await writeContract({
         address: tokenAddress,
         abi: FAUCET_ABI,
-        functionName: 'faucet',
+        functionName,
       })
       toaster.create({
         title: 'Claim submitted',
-        description: `Claiming 1,000 ${symbol} — confirm in your wallet`,
+        description: `Claiming ${amount} ${symbol} — confirm in your wallet`,
         status: 'info',
         duration: 5000,
       })
@@ -99,7 +109,7 @@ export function FaucetInterface() {
 
         <Box p={3} borderRadius="12px" bg="rgba(255, 215, 0, 0.1)" border="1px solid rgba(255, 215, 0, 0.25)">
           <Text fontSize="13px" color="#FFD700">
-            Claim free test tokens once every 24 hours. Use them to try swapping and adding liquidity.
+            Claim free test tokens once every 24 hours. Use USDC to try swapping and adding liquidity, and PROTO to vote on the Govern tab.
           </Text>
         </Box>
 
@@ -139,7 +149,7 @@ export function FaucetInterface() {
                 </VStack>
               </HStack>
               <Button
-                onClick={() => handleClaim(token.key, token.symbol)}
+                onClick={() => handleClaim(token)}
                 disabled={!address || isPending || isConfirming || claimingToken === token.key}
                 bg="#DC143C"
                 color="white"

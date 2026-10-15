@@ -20,15 +20,17 @@ const STEPS = [
   <>Install a wallet such as MetaMask or Rabby and connect it with the button in the top right.</>,
   <>Switch to <b>Base Sepolia</b>. The app offers a one-click switch if you're on another network.</>,
   <>Get free test ETH from the <Link href={BASE_SEPOLIA_FAUCET_URL}>Base Sepolia faucet</Link>.</>,
-  <>Claim 1,000 test USDC on the <b>Faucet</b> tab (once every 24 hours).</>,
+  <>Claim test USDC and PROTO on the <b>Faucet</b> tab (once every 24 hours).</>,
   <>Swap between ETH, PROTO and USDC, or add liquidity on the <b>Pool</b> tab to earn LP tokens.</>,
+  <>On the <b>Govern</b> tab, activate your PROTO votes, then propose fee changes or vote on open proposals.</>,
 ]
 
 const FEATURES = [
-  'Uniswap V2-style constant-product AMM (x · y = k) with a 0.3% swap fee',
+  'Uniswap V2-style constant-product AMM (x · y = k) with a governance-set swap fee (0.3% by default)',
   'Factory, Pair and Router contracts written from scratch in Solidity',
   'Multi-hop routing, native ETH support via WETH, slippage and deadline protection',
-  'Flash swaps, plus governance contracts (Governor + Timelock) and a treasury',
+  'Flash swaps with their own fee, and an optional protocol fee paid to the treasury',
+  'On-chain governance: PROTO holders propose and vote, and a timelock executes the result',
   'Tested with Foundry (unit and fuzz tests); all contracts verified on Basescan',
 ]
 
@@ -114,7 +116,7 @@ export function AboutDialog({ isOpen, onClose }) {
             </Box>
 
             <VStack align="stretch" gap={2}>
-              <SectionTitle>Try it in five steps</SectionTitle>
+              <SectionTitle>Try it in six steps</SectionTitle>
               <Ol pl={5} listStyleType="decimal" display="flex" flexDir="column" gap={1.5}>
                 {STEPS.map((step, i) => <li key={i}>{step}</li>)}
               </Ol>
