@@ -105,11 +105,12 @@ contract FlashLoanExample {
         // 3. Refinance debt
         // 4. Any other complex DeFi operation
         
-        // Calculate repayment amount using the pair's trading fee (0.3%)
-        // For flash loans through swap, we use the same 0.3% fee as regular swaps
-        // The fee is calculated as: amountToRepay = amountBorrow * 1000 / 997
+        // Calculate repayment using the governance-controlled flash loan fee (basis points)
+        // The pair charges the fee on the repaid amount, so:
+        // amountToRepay = amountBorrow * 10000 / (10000 - flashLoanFee)
         // This ensures the invariant k is maintained after the flash loan
-        uint256 amountToRepay = (amountBorrow * 1000) / 997 + 1; // +1 for rounding
+        uint256 flashFee = factory.flashLoanFee();
+        uint256 amountToRepay = (amountBorrow * 10000) / (10000 - flashFee) + 1; // +1 for rounding
         uint256 fee = amountToRepay - amountBorrow;
         
         _executeFlashLoanLogic(tokenBorrow, amountBorrow, userData, originalCaller);

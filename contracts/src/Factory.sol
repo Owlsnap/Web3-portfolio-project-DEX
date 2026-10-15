@@ -4,8 +4,6 @@ pragma solidity ^0.8.28;
 import "./Pair.sol";
 import "./Treasury.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title Factory
@@ -20,19 +18,19 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * - Allow governance to control protocol parameters
  */
 contract Factory is Ownable {
-    using SafeERC20 for IERC20;
     
     // ============ STATE VARIABLES ============
     
     /**
-     * @dev Address that receives protocol fees (if enabled)
-     * If address(0), no fees are taken
+     * @dev Address that receives the protocol fee (if enabled)
+     * When set, pairs mint 1/6 of the trading fee growth to this address as LP tokens
+     * (Uniswap V2 mechanism). If address(0), no protocol fee is taken
      */
     address public feeTo;
     
     /**
-     * @dev Treasury contract for automated fee collection
-     * When set, fees can be automatically sent to treasury
+     * @dev Protocol treasury (owned by governance)
+     * Protocol fees reach it when governance sets feeTo to this address
      */
     Treasury public treasury;
     
@@ -102,11 +100,6 @@ contract Factory is Ownable {
      * @dev Emitted when treasury is updated by governance
      */
     event TreasuryUpdated(address oldTreasury, address newTreasury);
-    
-    /**
-     * @dev Emitted when fees are collected to treasury
-     */
-    event FeesCollectedToTreasury(address indexed token, uint256 amount);
 
     /**
      * @dev Initialize the factory
@@ -210,50 +203,14 @@ contract Factory is Ownable {
     }
 
     /**
-     * @dev Set the treasury contract for automated fee collection (governance only)
+     * @dev Record the protocol treasury contract (governance only)
+     * To route protocol fees there, governance also calls setFeeTo(treasury)
      * @param _treasury New treasury contract address
      */
     function setTreasury(address _treasury) external onlyOwner {
         address oldTreasury = address(treasury);
         treasury = Treasury(payable(_treasury));
         emit TreasuryUpdated(oldTreasury, _treasury);
-    }
-
-    /**
-     * @dev Collect fees from a specific pair to treasury (anyone can call)
-     * @param pair Address of the pair to collect fees from
-     * @param token Address of the token to collect fees for
-     */
-    function collectFeesToTreasury(address pair, address token) external {
-        require(address(treasury) != address(0), "Factory: Treasury not set");
-        require(pair != address(0), "Factory: Invalid pair");
-        require(token != address(0), "Factory: Invalid token");
-        
-        uint256 balance = IERC20(token).balanceOf(pair);
-        if (balance > 0) {
-            // Transfer fees from pair directly to treasury
-            IERC20(token).safeTransferFrom(pair, address(treasury), balance);
-            
-            // Notify treasury of the deposit to update internal tracking
-            treasury.receiveTokenDeposit(token, balance, pair);
-            
-            emit FeesCollectedToTreasury(token, balance);
-        }
-    }
-
-    /**
-     * @dev Collect ETH fees to treasury (anyone can call)
-     */
-    function collectETHFeesToTreasury() external payable {
-        require(address(treasury) != address(0), "Factory: Treasury not set");
-        
-        if (msg.value > 0) {
-            // Send ETH to treasury
-            (bool success, ) = payable(address(treasury)).call{value: msg.value}("");
-            require(success, "Factory: ETH transfer failed");
-            
-            emit FeesCollectedToTreasury(address(0), msg.value);
-        }
     }
 
     /**

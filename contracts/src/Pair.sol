@@ -27,6 +27,9 @@ contract Pair is ERC20 {
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
 
+    // reserve0 * reserve1 after the most recent liquidity event, used for the protocol fee
+    uint256 public kLast;
+
     // Minimum liquidity locked forever
     uint256 public constant MINIMUM_LIQUIDITY = 10**3; 
     
@@ -112,6 +115,32 @@ contract Pair is ERC20 {
     }
 
     /**
+     * @dev Mint the protocol's share of fee growth (1/6 of LP fees) to the factory's feeTo
+     * Same mechanism as Uniswap V2: fees are measured as growth in sqrt(k) since the last
+     * liquidity event and paid out as newly minted LP tokens
+     * @return feeOn Whether a protocol fee recipient is set
+     */
+    function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
+        address feeTo = IFactoryFees(factory).feeTo();
+        feeOn = feeTo != address(0);
+        uint256 _kLast = kLast; // Gas optimization
+        if (feeOn) {
+            if (_kLast != 0) {
+                uint256 rootK = _sqrt(uint256(_reserve0) * _reserve1);
+                uint256 rootKLast = _sqrt(_kLast);
+                if (rootK > rootKLast) {
+                    uint256 numerator = totalSupply() * (rootK - rootKLast);
+                    uint256 denominator = rootK * 5 + rootKLast;
+                    uint256 liquidity = numerator / denominator;
+                    if (liquidity > 0) _mint(feeTo, liquidity);
+                }
+            }
+        } else if (_kLast != 0) {
+            kLast = 0;
+        }
+    }
+
+    /**
      * @dev Mint LP tokens when liquidity is added
      * @param to Address to mint LP tokens to
      * @return liquidity Amount of LP tokens minted
@@ -123,7 +152,8 @@ contract Pair is ERC20 {
         uint256 amount0 = balance0 - _reserve0; // Calculate token0 deposited since last update
         uint256 amount1 = balance1 - _reserve1; // Calculate token1 deposited since last update
 
-        uint256 _totalSupply = totalSupply(); // Get current LP token supply
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+        uint256 _totalSupply = totalSupply(); // Get current LP token supply (after protocol fee mint)
         if (_totalSupply == 0) {
             // First liquidity provider - use geometric mean
             liquidity = _sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
@@ -140,6 +170,7 @@ contract Pair is ERC20 {
         _mint(to, liquidity); // Mint LP tokens to specified address
 
         _update(balance0, balance1);
+        if (feeOn) kLast = uint256(reserve0) * reserve1;
         emit Mint(msg.sender, amount0, amount1);
     }
 
@@ -173,13 +204,15 @@ contract Pair is ERC20 {
      * @return amount1 Amount of token1 withdrawn
      */
     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {
+        (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         address _token0 = token0; // Gas optimization - load from storage once
         address _token1 = token1; // Gas optimization - load from storage once
         uint256 balance0 = IERC20(_token0).balanceOf(address(this)); // Current token0 balance
         uint256 balance1 = IERC20(_token1).balanceOf(address(this)); // Current token1 balance
         uint256 liquidity = balanceOf(address(this)); // LP tokens to burn (sent to this contract)
 
-        uint256 _totalSupply = totalSupply(); // Get total LP supply
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+        uint256 _totalSupply = totalSupply(); // Get total LP supply (after protocol fee mint)
         amount0 = (liquidity * balance0) / _totalSupply; // Calculate proportional token0 share
         amount1 = (liquidity * balance1) / _totalSupply; // Calculate proportional token1 share
         
@@ -194,6 +227,7 @@ contract Pair is ERC20 {
         balance1 = IERC20(_token1).balanceOf(address(this)); // New balance after transfer
 
         _update(balance0, balance1); // Update reserves with new balances
+        if (feeOn) kLast = uint256(reserve0) * reserve1;
         emit Burn(msg.sender, amount0, amount1, to);
     }
 
@@ -240,13 +274,17 @@ contract Pair is ERC20 {
         
         {
             // Scope to avoid "stack too deep" compilation error
-            // Apply 0.3% trading fee: balance * 1000 - amountIn * 3 (3/1000 = 0.3%)
-            uint256 balance0Adjusted = (balance0 * 1000) - (amount0In * 3); // Fee-adjusted balance0
-            uint256 balance1Adjusted = (balance1 * 1000) - (amount1In * 3); // Fee-adjusted balance1
-            
+            // Governance-controlled fee in basis points: flash swaps (with callback data) pay
+            // the flash loan fee, regular swaps pay the trading fee. Router quotes use the same values.
+            uint256 fee = data.length > 0
+                ? IFactoryFees(factory).flashLoanFee()
+                : IFactoryFees(factory).tradingFee();
+            uint256 balance0Adjusted = (balance0 * 10000) - (amount0In * fee); // Fee-adjusted balance0
+            uint256 balance1Adjusted = (balance1 * 10000) - (amount1In * fee); // Fee-adjusted balance1
+
             // Verify constant product formula: k_after >= k_before (accounting for fees)
             require(
-                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * _reserve1 * 1000**2,
+                balance0Adjusted * balance1Adjusted >= uint256(_reserve0) * _reserve1 * 10000**2,
                 "Pair: K" // "K" constant product invariant violated
             );
         }
@@ -273,6 +311,13 @@ contract Pair is ERC20 {
     }
 
 }         /** END OF CONTRACT */
+
+    // Fee settings read from the Factory (an interface avoids a circular import)
+    interface IFactoryFees {
+        function feeTo() external view returns (address);
+        function tradingFee() external view returns (uint256);
+        function flashLoanFee() external view returns (uint256);
+    }
 
     // Interface for callback (flash loan functionality)
     interface ICallee {

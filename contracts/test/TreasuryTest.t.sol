@@ -38,7 +38,6 @@ contract TreasuryTest is Test {
     event FundsWithdrawn(address indexed token, uint256 amount, address indexed to, string purpose);
     event DistributionExecuted(address indexed token, address[] recipients, uint256[] amounts, string purpose);
     event TreasuryUpdated(address oldTreasury, address newTreasury);
-    event FeesCollectedToTreasury(address indexed token, uint256 amount);
 
     function setUp() public {
         vm.startPrank(deployer);
@@ -337,48 +336,6 @@ contract TreasuryTest is Test {
         (address treasuryAddress, bool isSet) = factory.getTreasuryInfo();
         assertEq(treasuryAddress, address(treasury));
         assertTrue(isSet);
-    }
-
-    function testFactoryFeeCollection() public {
-        // First set up treasury in factory
-        testFactoryTreasuryIntegration();
-
-        // Simulate fee collection by minting tokens to a mock pair address
-        address mockPair = makeAddr("mockPair");
-        vm.prank(deployer);
-        testToken.mint(mockPair, 50e18);
-
-        // Approve factory to spend tokens from the pair (simulate pair allowing factory to collect)
-        vm.prank(mockPair);  
-        testToken.approve(address(factory), 50e18);
-
-        // Collect fees to treasury
-        vm.expectEmit(true, true, false, true);
-        emit FeesCollectedToTreasury(address(testToken), 50e18);
-        
-        factory.collectFeesToTreasury(mockPair, address(testToken));
-
-        // Verify fees were collected to treasury
-        assertEq(treasury.getBalance(address(testToken)), 50e18);
-        assertTrue(treasury.isSupportedToken(address(testToken)));
-    }
-
-    function testFactoryETHFeeCollection() public {
-        // First set up treasury in factory
-        testFactoryTreasuryIntegration();
-
-        // Collect ETH fees to treasury
-        uint256 ethAmount = 1 ether;
-        
-        vm.expectEmit(true, true, false, true);
-        emit FeesCollectedToTreasury(address(0), ethAmount);
-        
-        vm.prank(alice);
-        factory.collectETHFeesToTreasury{value: ethAmount}();
-
-        // Verify ETH was collected to treasury
-        assertEq(treasury.getBalance(address(0)), ethAmount);
-        assertTrue(treasury.isSupportedToken(address(0)));
     }
 
     // ============ TREASURY PURPOSE AND STATS ============

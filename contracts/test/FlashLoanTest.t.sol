@@ -90,7 +90,7 @@ contract FlashLoanTest is Test {
         assertTrue(possible, "Flash loan should be possible");
         
         // Calculate the correct fee based on the pair's fee system
-        uint256 amountToRepay = (flashLoanAmount * 1000) / 997 + 1;
+        uint256 amountToRepay = (flashLoanAmount * 10000) / (10000 - factory.flashLoanFee()) + 1;
         uint256 fee = amountToRepay - flashLoanAmount;
         console.log("Flash loan amount:", flashLoanAmount / 1e18);
         console.log("Amount to repay:", amountToRepay / 1e18);
@@ -216,7 +216,7 @@ contract FlashLoanTest is Test {
             uint256 contractBalanceBefore = tokenA.balanceOf(address(flashLoanContract));
             
             // Add tokens to contract for this test (just fee + some profit)
-            uint256 amountToRepay = (amount * 1000) / 997 + 1;
+            uint256 amountToRepay = (amount * 10000) / (10000 - factory.flashLoanFee()) + 1;
             uint256 expectedFee = amountToRepay - amount;
             tokenA.mint(address(flashLoanContract), expectedFee + 1 * 1e18); // fee + 1 token profit
             
@@ -254,7 +254,7 @@ contract FlashLoanTest is Test {
         uint256 flashLoanAmount = 25000 * 1e18;
         
         // Calculate the fee first to determine how much profit we need
-        uint256 amountToRepay = (flashLoanAmount * 1000) / 997 + 1;
+        uint256 amountToRepay = (flashLoanAmount * 10000) / (10000 - factory.flashLoanFee()) + 1;
         uint256 fee = amountToRepay - flashLoanAmount;
         
         // Give the contract enough tokens to cover fee + desired net profit
